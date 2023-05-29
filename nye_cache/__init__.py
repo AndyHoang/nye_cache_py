@@ -3,19 +3,21 @@ __all__ = (
     "cached",
 )
 
+import logging
 import functools
 import collections
 from cachetools import Cache, _CacheInfo, TTLCache, keys
 
+logger = logging.getLogger(__name__)
 
-class StaledCacheError(Exception):
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-        super().__init__(self, "StaledCacheError: key: %s, value: %s" % (self.key, self.value))
+# class StaledCacheError(Exception):
+    # def __init__(self, key, value):
+        # self.key = key
+        # self.value = value
+        # super().__init__(self, "StaledCacheError: key: %s, value: %s" % (self.key, self.value))
 
-    def __str__(self):
-        return "StaledCacheError: key: %s, value: %s" % (self.key, self.value)
+    # def __str__(self):
+        # return "StaledCacheError: key: %s, value: %s" % (self.key, self.value)
 
 class NYECache(TTLCache):
     """NYECache
@@ -31,14 +33,15 @@ class NYECache(TTLCache):
         this can raised KeyError of course
         :param key:
         """
+        logger.info(f"posibility_staled_get_item: {key}")
         return Cache.__getitem__(self, key)
 
 
-    def __missing__(self, key):
-        try:
-            raise StaledCacheError(key, self.posibility_staled_get_item(self, key))
-        except KeyError:
-            raise
+    # def __missing__(self, key):
+        # try:
+            # raise StaledCacheError(key, self.posibility_staled_get_item(key))
+        # except KeyError:
+            # raise
 
     def just_expire(self, time=None):
         """similiar with def expired,
@@ -67,11 +70,6 @@ class NYECache(TTLCache):
         with self.__timer as time:
             self.just_expire(time)
             return cache_len(self)
-
-    @property
-    def currsize(self):
-        with self.__timer as time:
-            self.just_expire(time)
 
     def clear(self):
         with self.__timer as time:
@@ -109,6 +107,18 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
     """
 
     def decorator(func):
+
+        def nye_func(*args, **kwargs):
+            k = key(*args, **kwargs)
+            try:
+                return func(*args, **kwargs)
+            except exc as er:
+                logger.warning(f"{func.__name__}({args}, {kwargs}) raised {exc.__name__}}} getting exception, try to use staled cache of key {k}")
+                try:
+                    return cache.posibility_staled_get_item(k)
+                except KeyError:
+                    raise er
+
         if info:
             hits = misses = 0
 
@@ -135,7 +145,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                 def wrapper(*args, **kwargs):
                     nonlocal misses
                     misses += 1
-                    return func(*args, **kwargs)
+                    return nye_func(*args, **kwargs)
 
                 def cache_clear():
                     nonlocal hits, misses
@@ -154,7 +164,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                         return result
                     except KeyError:
                         misses += 1
-                    v = func(*args, **kwargs)
+                    v = nye_func(*args, **kwargs)
                     try:
                         cache[k] = v
                     except ValueError:
@@ -181,7 +191,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                     except KeyError:
                         with lock:
                             misses += 1
-                    v = func(*args, **kwargs)
+                    v = nye_func(*args, **kwargs)
                     # in case of a race, prefer the item already in the cache
                     try:
                         with lock:
@@ -203,7 +213,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
             if cache is None:
 
                 def wrapper(*args, **kwargs):
-                    return func(*args, **kwargs)
+                    return nye_func(*args, **kwargs)
 
                 def cache_clear():
                     pass
@@ -216,7 +226,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                         return cache[k]
                     except KeyError:
                         pass  # key not found
-                    v = func(*args, **kwargs)
+                    v = nye_func(*args, **kwargs)
                     try:
                         cache[k] = v
                     except ValueError:
@@ -235,7 +245,7 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                             return cache[k]
                     except KeyError:
                         pass  # key not found
-                    v = func(*args, **kwargs)
+                    v = nye_func(*args, **kwargs)
                     # in case of a race, prefer the item already in the cache
                     try:
                         with lock:
