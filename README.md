@@ -10,10 +10,12 @@ Extend the [TTLCache](https://cachetools.readthedocs.io/en/latest/index.html?hig
 
 ## Installation
 
+WIP
+
 Install the library using pip:
 
 ```
-pip install nye-cache-py
+pip install -i https://test.pypi.org/simple/ nye-cache-py==0.1.1a0
 ```
 
 ## Usage
@@ -31,7 +33,8 @@ This project has several milestones that need to be accomplished. These include:
 - [x] Interface similar with TTLCache
 - [X] Reuse cache if one expected exception happened when calling the main function
 - [ ] Install with pip using test pypi repo
-- [ ] Support expect multi exception
+- [ ] Run CI/CD action in github
+- [ ] Support expect multi exception at same time
 - [ ] Improve unittest to ensure staled data will be removed if fresh data come
 
 ###  Version 0.2.x
