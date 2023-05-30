@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nye-cache-py"
-version = "0.1.0"
+version = "0.1.1a0"
 description = ""
 authors = ["Andy Hoang <ngocdunghoangdl@gmail.com>"]
 readme = "README.md"
