@@ -7,6 +7,7 @@ import logging
 import functools
 import collections
 from cachetools import Cache, _CacheInfo, TTLCache, keys
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -27,78 +28,46 @@ class NYECache(TTLCache):
     It still obey the maxsize rules
     """
 
+    _staled_data = dict()
+
+    def __init__(self, maxsize, ttl, timer=time.monotonic, getsizeof=None):
+        super().__init__(maxsize, ttl, timer=timer, getsizeof=getsizeof)
+
     def posibility_staled_get_item(self, key):
         """
         shortcut method getting cached data without the hassle of timer
         this can raised KeyError of course
         :param key:
         """
-        logger.info(f"posibility_staled_get_item: {key}")
-        return Cache.__getitem__(self, key)
+        logger.warning(f"posibility_staled_get_item: {key}")
+        return self._staled_data[key]
 
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+        try:
+            del self._staled_data[key]
+        except KeyError:
+            pass
 
-    # def __missing__(self, key):
-        # try:
-            # raise StaledCacheError(key, self.posibility_staled_get_item(key))
-        # except KeyError:
-            # raise
-
-    def just_expire(self, time=None):
+    def expire(self, time=None):
         """similiar with def expired,
-        but do not remove the actual cache in __data[]
         """
         if time is None:
             time = self.timer()
-        root = self.__root
+        root = self._TTLCache__root
         curr = root.next
-        links = self.__links
-        # cache_delitem = Cache.__delitem__
+        links = self._TTLCache__links
+        cache_delitem = Cache.__delitem__
         while curr is not root and not (time < curr.expires):
-            # cache_delitem(self, curr.key) # not remove here
+            try:
+                self._staled_data[curr.key] = Cache.__getitem__(self, curr.key)
+            except KeyError:
+                pass
+            cache_delitem(self, curr.key)
             del links[curr.key]
             next = curr.next
             curr.unlink()
             curr = next
-
-    def __repr__(self, cache_repr=Cache.__repr__):
-        with self.__timer as time:
-            self.just_expire(time)
-            return cache_repr(self)
-
-
-    def __len__(self, cache_len=Cache.__len__):
-        with self.__timer as time:
-            self.just_expire(time)
-            return cache_len(self)
-
-    def clear(self):
-        with self.__timer as time:
-            self.expire(time)
-            Cache.clear(self)
-
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        root = self.__root
-        root.prev = root.next = root
-        for link in sorted(self.__links.values(), key=lambda obj: obj.expires):
-            link.next = root
-            link.prev = prev = root.prev
-            prev.next = root.prev = link
-        self.expire(self.timer())
-
-    def popitem(self):
-        """Remove and return the `(key, value)` pair least recently used that
-        has not already expired.
-        """
-        with self.timer as time:
-            self.expire(time)
-            try:
-                key = next(iter(self.__links))
-            except StopIteration:
-                raise KeyError("%s is empty" % type(self).__name__) from None
-            else:
-                return (key, self.pop(key))
 
 def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
     """Decorator to wrap a function with a memoizing callable that saves
@@ -111,11 +80,11 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
         def nye_func(*args, **kwargs):
             k = key(*args, **kwargs)
             try:
-                return func(*args, **kwargs)
+                return (func(*args, **kwargs), None)
             except exc as er:
-                logger.warning(f"{func.__name__}({args}, {kwargs}) raised {exc.__name__}}} getting exception, try to use staled cache of key {k}")
+                logger.info(f"{func.__name__}({args}, {kwargs}) raised {exc.__name__}}} getting exception, try to use staled cache of key {k}")
                 try:
-                    return cache.posibility_staled_get_item(k)
+                    return cache.posibility_staled_get_item(k), er
                 except KeyError:
                     raise er
 
@@ -145,7 +114,8 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                 def wrapper(*args, **kwargs):
                     nonlocal misses
                     misses += 1
-                    return nye_func(*args, **kwargs)
+                    v, _ = nye_func(*args, **kwargs)
+                    return v
 
                 def cache_clear():
                     nonlocal hits, misses
@@ -164,9 +134,10 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                         return result
                     except KeyError:
                         misses += 1
-                    v = nye_func(*args, **kwargs)
+                    v, err = nye_func(*args, **kwargs)
                     try:
-                        cache[k] = v
+                        if err is None:
+                            cache[k] = v
                     except ValueError:
                         pass  # value too large
                     return v
@@ -191,11 +162,12 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                     except KeyError:
                         with lock:
                             misses += 1
-                    v = nye_func(*args, **kwargs)
+                    v, err = nye_func(*args, **kwargs)
                     # in case of a race, prefer the item already in the cache
                     try:
                         with lock:
-                            return cache.setdefault(k, v)
+                            if err is None:
+                                return cache.setdefault(k, v)
                     except ValueError:
                         return v  # value too large
 
@@ -213,8 +185,8 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
             if cache is None:
 
                 def wrapper(*args, **kwargs):
-                    return nye_func(*args, **kwargs)
-
+                    v, _ = nye_func(*args, **kwargs)
+                    return v
                 def cache_clear():
                     pass
 
@@ -226,9 +198,10 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                         return cache[k]
                     except KeyError:
                         pass  # key not found
-                    v = nye_func(*args, **kwargs)
+                    v, err = nye_func(*args, **kwargs)
                     try:
-                        cache[k] = v
+                        if err is None:
+                            cache[k] = v
                     except ValueError:
                         pass  # value too large
                     return v
@@ -245,11 +218,12 @@ def cached(cache, key=keys.hashkey, lock=None, info=False, exc=Exception):
                             return cache[k]
                     except KeyError:
                         pass  # key not found
-                    v = nye_func(*args, **kwargs)
+                    v, err = nye_func(*args, **kwargs)
                     # in case of a race, prefer the item already in the cache
                     try:
                         with lock:
-                            return cache.setdefault(k, v)
+                            if err is None:
+                                return cache.setdefault(k, v)
                     except ValueError:
                         return v  # value too large
 

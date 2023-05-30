@@ -3,13 +3,14 @@ import time
 
 import pytest
 
-from unittest.mock import Mock
 from os.path import abspath, curdir
 from os.path import join as join_path
 
 from nye_cache import cached, NYECache
 from cachetools import Cache
 
+
+from unittest.mock import MagicMock
 
 
 FILE_NAME = '.test_cache.to_be_deleted'
@@ -29,16 +30,16 @@ def clean() -> None:
 
 def test_can_use_cache() -> None:
     @cached(cache=Cache(maxsize=256))
-    def this_is_a_function() -> int:
+    def cached_the_function() -> int:
 
         with open(FILE_PATH, 'a') as f:
             f.write(CONTENT)
 
         return 1
 
-    result = this_is_a_function()
+    result = cached_the_function()
 
-    assert this_is_a_function() == result
+    assert cached_the_function() == result
 
     with open(FILE_PATH, 'r') as f:
         file_content = f.read()
@@ -48,33 +49,37 @@ def test_can_use_cache() -> None:
     clean()
 
 def test_put_expired_cache_back_in_when_func_exception() -> None:
-    _this_is_an_internal_function = Mock(side_effect=[1, 0, 0, 0, 2, 1])
+    mock_method = MagicMock()
 
     my_cache = NYECache(ttl=2, maxsize=256, timer=time.time)
+
     @cached(cache=my_cache, info=True, exc=MyException)
-    def this_is_a_function(a, b):
-        value = _this_is_an_internal_function()
-        if value == 0:
-            raise MyException("This is a custom exception")
-        return value
+    def cached_the_function(a, b):
+        x = mock_method()
+        return x
 
-    val = this_is_a_function(1, 2)  # Normal first run
+    mock_method.return_value = 1
+    val = cached_the_function(1, 2)  # Normal first run
     assert val == 1
-    assert this_is_a_function.cache_info().hits == 0
-    val = this_is_a_function(1, 2)  # Normal sencond run
+    assert cached_the_function.cache_info().hits == 0
+
+    mock_method.side_effect = MyException("test")
+    val = cached_the_function(1, 2)  # Normal sencond run because of cached
     assert val == 1
-    assert this_is_a_function.cache_info().hits == 1
+    assert cached_the_function.cache_info().hits == 1
+    assert len(my_cache) == 1
 
-    time.sleep(3)
-    # cache is expired
-    _ = this_is_a_function(1, 2) # side_effect return 0 keep cache
-    _ = this_is_a_function(1, 2) # side_effect call has exception keep cache
-    val = this_is_a_function(1, 2) # side_effect return 2
+    time.sleep(4)
 
-    print(this_is_a_function.cache_info())
-    assert this_is_a_function.cache_info().misses == 2
-    assert this_is_a_function.cache_info().hits == 3
+    assert len(my_cache) == 0
+    assert len(my_cache._staled_data) == 1
 
-    assert val == 2
-    with pytest.raises(MyException):
-        this_is_a_function(3, 1)  # Exception should happens here
+    val = cached_the_function(1, 2) # side_effect exception but we staled is keep
+    assert val == 1
+
+    mock_method.side_effect = Exception("bigger")
+
+    with pytest.raises(Exception):
+        cached_the_function(1, 2) # should have error
+
+    assert len(my_cache._staled_data) == 1

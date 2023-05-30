@@ -20,6 +20,28 @@ pip install nye-cache-py
 
 TODO
 
+
+## Milestones
+
+This project has several milestones that need to be accomplished. These include:
+
+
+### Version 0.1.x
+
+- [x] Interface similar with TTLCache
+- [X] Reuse cache if one expected exception happened when calling the main function
+- [ ] Install with pip using test pypi repo
+- [ ] Support expect multi exception
+- [ ] Improve unittest to ensure staled data will be removed if fresh data come
+
+###  Version 0.2.x
+
+- [ ] Improve unittest by not using sleep to wait for cache expire
+- [ ] Staled data should obey max size logic too
+
+
+To track the progress of these milestones, you can view them on the [project's Milestones page](https://github.com/AndyHoang/nye_cache_py/milestones).
+
 ## Contributing
 
 - Fork the repository
