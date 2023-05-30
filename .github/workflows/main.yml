@@ -78,6 +78,6 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          coverage run pytest tests/
+          coverage run -m pytest tests/
           coverage report --skip-cover --skip-empty
 
