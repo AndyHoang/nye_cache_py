@@ -32,7 +32,7 @@ This project has several milestones that need to be accomplished. These include:
 
 - [x] Interface similar with TTLCache
 - [X] Reuse cache if one expected exception happened when calling the main function
-- [ ] Install with pip using test pypi repo
+- [x] Install with pip using test pypi repo
 - [ ] Run CI/CD action in github
 - [ ] Support expect multi exception at same time
 - [ ] Improve unittest to ensure staled data will be removed if fresh data come

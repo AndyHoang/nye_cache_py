@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nye-cache-py"
-version = "0.1.0"
+version = "0.0.2"
 description = ""
 authors = ["Andy Hoang <ngocdunghoangdl@gmail.com>"]
 readme = "README.md"
@@ -19,12 +19,11 @@ coverage = "^7.2.7"
 commitizen = "^3.2.2"
 
 
-
 [tool.commitizen]
 name = "cz_conventional_commits"
 tag_format = "$version"
 version_type = "pep440"
-version = "0.0.1"
+version_provider = "poetry"
 update_changelog_on_bump = true
 major_version_zero = true
 [build-system]
