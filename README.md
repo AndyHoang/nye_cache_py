@@ -1,8 +1,8 @@
 [![CI](https://github.com/AndyHoang/nye_cache_py/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/AndyHoang/nye_cache_py/actions/workflows/main.yml)
+
 [![Test Pypi](https://github.com/AndyHoang/nye_cache_py/actions/workflows/publish.yml/badge.svg?event=release)](https://github.com/AndyHoang/nye_cache_py/actions/workflows/publish.yml)
 
 # Python Caching Library
-
 
 This is a Python caching library, added small extension for [cachetools](https://github.com/tkem/cachetools)
 
@@ -14,12 +14,10 @@ Extend the [TTLCache](https://cachetools.readthedocs.io/en/latest/index.html?hig
 
 ## Installation
 
-WIP
-
 Install the library using pip:
 
 ```
-pip install -i https://test.pypi.org/simple/ nye-cache-py==0.1.0
+pip install -i https://test.pypi.org/simple/ nye-cache-py
 ```
 
 ## Usage
@@ -38,7 +36,7 @@ This project has several milestones that need to be accomplished. These include:
 - [X] Reuse cache if one expected exception happened when calling the main function
 - [x] Install with pip using test pypi repo
 - [x] Run CI/CD action in github
-- [x] Integrate auto bump version command
+- [x] Integrate auto bump version cli
 
 ###  Version 0.2.x
 
