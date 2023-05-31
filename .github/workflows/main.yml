@@ -1,4 +1,4 @@
-name: Python CI
+name: CI
 
 on:
   push:
@@ -80,4 +80,3 @@ jobs:
           source .venv/bin/activate
           coverage run -m pytest tests/
           coverage report --skip-cover --skip-empty
-

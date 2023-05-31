@@ -33,12 +33,13 @@ This project has several milestones that need to be accomplished. These include:
 - [x] Interface similar with TTLCache
 - [X] Reuse cache if one expected exception happened when calling the main function
 - [x] Install with pip using test pypi repo
-- [ ] Run CI/CD action in github
-- [ ] Support expect multi exception at same time
-- [ ] Improve unittest to ensure staled data will be removed if fresh data come
+- [x] Run CI/CD action in github
+- [x] Integrate auto bump version command
 
 ###  Version 0.2.x
 
+- [ ] Support expect multi exception at same time
+- [ ] Improve unittest to ensure staled data will be removed if fresh data come
 - [ ] Improve unittest by not using sleep to wait for cache expire
 - [ ] Staled data should obey max size logic too
 
