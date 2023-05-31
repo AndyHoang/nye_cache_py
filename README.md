@@ -1,6 +1,10 @@
+[![CI](https://github.com/AndyHoang/nye_cache_py/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/AndyHoang/nye_cache_py/actions/workflows/main.yml)
+[![Test Pypi](https://github.com/AndyHoang/nye_cache_py/actions/workflows/publish.yml/badge.svg?event=release)](https://github.com/AndyHoang/nye_cache_py/actions/workflows/publish.yml)
+
 # Python Caching Library
 
-This is a Python caching library and a small extension of [cachetools](https://github.com/tkem/cachetools), a popular Python caching library.
+
+This is a Python caching library, added small extension for [cachetools](https://github.com/tkem/cachetools)
 
 ## Features
 
