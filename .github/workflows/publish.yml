@@ -5,16 +5,17 @@ on:
     types: [ published ]
 
 jobs:
-  publish-service-client-package:
+    name: Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    #needs: test
     steps:
-      - name: Publish PyPi package
-        uses: code-specialist/pypi-poetry-publish@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          PACKAGE_DIRECTORY: "./nye_cache/"
-          PYTHON_VERSION: "3.10"
-          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PUBLISH_REGISTRY_PASSWORD }}
-          PUBLISH_REGISTRY: "https://test.pypi.org/legacy/"
+          python-version: "3.10"
+      - name: Install poetry
+        run: pip install poetry==1.5.0
+      - uses: bjoluc/semantic-release-config-poetry@v2
+        with:
+          pypi_token: ${{ secrets.PUBLISH_REGISTRY_PASSWORD }}
+          PYPI_REPOSITORY: "https://test.pypi.org/legacy/"
