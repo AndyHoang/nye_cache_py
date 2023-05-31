@@ -45,6 +45,31 @@ This project has several milestones that need to be accomplished. These include:
 
 To track the progress of these milestones, you can view them on the [project's Milestones page](https://github.com/AndyHoang/nye_cache_py/milestones).
 
+## Versioning
+
+To keep track of changes made to the project and make it easier to keep the version in sync, we recommend using [Commitizen](https://commitizen-tools.github.io/commitizen/) within this project.
+
+Commitizen provides an interactive prompt that allows contributors to follow a standardized format for commit messages, called conventional commits. By following this format, it's easier to understand the changes made to the project, and automate publish/release processes.
+
+To use Commitizen to bump the version:
+
+1. Stage your changes with `git add`, then run the `poetry run cz c` command instead of `git commit`. This command will open an interactive prompt that walks you through the process of crafting a commit message in the conventional format.
+> You can use git commit without cz, but you need to obey the commit msg format convention
+
+2. Push your changes (including the updated version number) to the repository with:
+
+   ```
+   poetry run cz bump -pr alpha
+   ```
+
+   ```
+   poetry run cz bump --increment PATCH
+   ```
+3. Push the tag/branch to origin
+
+4. Release
+    TODO
+
 ## Contributing
 
 - Fork the repository
