@@ -9,13 +9,12 @@ packages = [{include = "nye_cache"}]
 [tool.poetry.dependencies]
 python = "^3.7"
 cachetools = "^5"
-funcy = "^2.0"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
 tox = "^4.5.2"
-coverage = "^7.2.7"
+coverage = "^7"
 commitizen = "^3.2.2"
 
 
