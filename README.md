@@ -19,7 +19,7 @@ WIP
 Install the library using pip:
 
 ```
-pip install -i https://test.pypi.org/simple/ nye-cache-py==0.1.1a0
+pip install -i https://test.pypi.org/simple/ nye-cache-py==0.1.0
 ```
 
 ## Usage
