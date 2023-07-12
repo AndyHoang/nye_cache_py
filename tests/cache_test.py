@@ -81,5 +81,4 @@ def test_put_expired_cache_back_in_when_func_exception() -> None:
 
     with pytest.raises(Exception):
         cached_the_function(1, 2) # should have error
-
     assert len(my_cache._staled_data) == 1
